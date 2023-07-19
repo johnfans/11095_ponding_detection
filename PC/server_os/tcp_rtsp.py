@@ -26,6 +26,7 @@ HOST = '0.0.0.0'  # 监听地址
 PORT = 8888  # 监听端口
 BUFFER_SIZE = 1024  # 缓冲区大小
 def rtsp_monitor():
+    fname=["right_pre","center_pre","left_pre"]
     # RTSP流媒体地址
     global t_buffer
     t_buffer_n=0
@@ -69,7 +70,7 @@ def rtsp_monitor():
                 cv2.destroyAllWindows()
                 return
         if t_buffer_n!=t_buffer[0]:
-            cv2.imwrite("frame"+str(t_buffer[0])+".jpg", frame)
+            cv2.imwrite(fname[int(t_buffer[0])]+".jpg", frame)
             
         t_buffer_n=t_buffer[0]
         
@@ -153,7 +154,16 @@ def commanding(command):
     else:
         print("[fail]命令有误")
     return
-    
+
+def writeline(content, line_number):
+    with open('tcp.txt', 'r') as f:
+        lines = f.readlines()
+
+    with open('tcp.txt', 'w') as f:
+        for i, line in enumerate(lines):
+            if i == line_number - 1:
+                f.write(content + '\n')
+            f.write(line)
 
 def tcp_thread():
     while True:
@@ -202,8 +212,8 @@ def tcp_thread():
             else :
                 client_socket.send("x".encode())
             
-            #查看用户需求
-            
+            #写入tcp.txt
+            writeline("t"+t_buffer,t_buffer[0])
                 
         client_socket.close()
         server_socket.close()
@@ -222,6 +232,8 @@ def input_thread():
         if command=="":
             continue
         commanding(command)
+        
+
 
 
 # 创建 Telnet 连接
