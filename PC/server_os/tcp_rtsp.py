@@ -7,6 +7,7 @@ import keyboard
 import os
 import sys
 
+res=["[1,2,3,4]","[5,6,7,8]","[9,10,11,12]"]
 
 state_m=0
 state_c=0
@@ -15,7 +16,7 @@ ask=0
 state_net=0
 t_buffer=[0]
 
-TNHOST = "192.168.243.64"
+TNHOST = "192.168.167.64"
 TNPORT = 23
 
 # 登录凭据
@@ -30,7 +31,7 @@ def rtsp_monitor():
     # RTSP流媒体地址
     global t_buffer
     t_buffer_n=0
-    rtsp_url = "rtsp://192.168.243.64:8554/live"
+    rtsp_url = "stream_chn1.mp4"
     
 
     # 创建视频捕获对象
@@ -78,7 +79,7 @@ def rtsp_monitor():
 
 def commanding(command):
     global state_m, angle_m, state_c,state_net,tn,ask
-    CAMPRO="./ohos_rtsp_demo"
+    CAMPRO="./ohos_store_demo"
     if command=="state":
         print("电机："+str(state_m))
         print("相机："+str(state_c))
@@ -138,8 +139,8 @@ def commanding(command):
             tn.write(b"cd /mnt\n")
             tn.write(CAMPRO.encode('ascii')+b"\n\n")
             tn.read_until(b"\n")
-            reso = tn.read_until(b"\n")
-            reso = tn.read_until(b"\n")
+            reso = tn.read_until(b"[func]")
+            reso = tn.read_until(b"[func]")
             print("[cam]"+reso.decode('ascii'))
             print("[info]相机已启动")
             state_c=1
@@ -167,7 +168,7 @@ def writeline(content, line_number):
 
 def tcp_thread():
     while True:
-        global state_c,state_m,angle_m,t_buffer,HOST,PORT,BUFFER_SIZE,ask,TNHOST,TNPORT,state_net
+        global state_c,state_m,angle_m,t_buffer,HOST,PORT,BUFFER_SIZE,ask,TNHOST,TNPORT,state_net,res
 
         # 创建一个TCP套接字
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -194,8 +195,10 @@ def tcp_thread():
             
             if mess_i[0]=='t':
                 t_buffer=mess_i[1:]
+                t_buffer=t_buffer+res[int(t_buffer[0])]
                 print("[info]收到数据")
                 print("t"+t_buffer[0])
+                writeline("t"+t_buffer,int(t_buffer[0])+3)
                 continue
             
             if ask!=0:
@@ -213,7 +216,7 @@ def tcp_thread():
                 client_socket.send("x".encode())
             
             #写入tcp.txt
-            writeline("t"+t_buffer,t_buffer[0])
+           
                 
         client_socket.close()
         server_socket.close()
